@@ -11,8 +11,20 @@ export default defineConfig({
     vueJsx(),
   ],
   resolve: {
+    // alias: {
+    //   '@': fileURLToPath(new URL('./src', import.meta.url))
+    // }
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url))
-    }
-  }
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+    },
+  },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
+    },
+  },
 })

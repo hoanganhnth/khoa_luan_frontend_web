@@ -1,5 +1,5 @@
 <template>
-  <a-row type="flex" :gutter="[24, 24]" justify="space-around" align="middle">
+  <a-row type="flex" :gutter="[24, 24]" justify="space-around" align="middle" class="full-height">
     <a-col class="col-form">
       <a-form
         :model="formState"
@@ -71,7 +71,7 @@ const onFinish = async (values) => {
       role: StringConstants.ROLE_RECRUITER
     });
     console.log('Login successful:', response.data);
-    router.push('/home');
+    router.push('/dashboard');
     openNotification("Success", "Đăng nhập thành công");
     // Xử lý sau khi đăng nhập thành công
   } catch (error) {
@@ -97,5 +97,8 @@ const onFinishFailed = (errorInfo) => {
 }
 .mt-2 {
   margin-top: 8px;
+}
+.full-height {
+  height: 100vh; /* Chiếm toàn bộ chiều cao của viewport */
 }
 </style>

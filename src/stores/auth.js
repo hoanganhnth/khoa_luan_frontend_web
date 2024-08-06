@@ -1,11 +1,11 @@
-import { defineStore } from 'pinia';
+import { defineStore } from "pinia";
 import { useApi, useApiPrivate } from "../composables/useApi";
-import { APIEndpoints } from '@/utils/api_constants';
+import { APIEndpoints } from "@/utils/api_constants";
 
-export const useAuthStore = defineStore('auth', {
+export const useAuthStore = defineStore("auth", {
   state: () => ({
     user: {},
-    accessToken: '',
+    accessToken: "",
     authReady: false,
   }),
 
@@ -18,9 +18,13 @@ export const useAuthStore = defineStore('auth', {
     setAccessToken(token) {
       this.accessToken = token;
       // Lưu token vào localStorage để giữ lại giữa các phiên làm việc
-      localStorage.setItem('token', token);
+      localStorage.setItem("token", token);
+      window.dispatchEvent(new Event('storage'));
     },
-
+    getAccessToken() {
+      console.log(this.accessToken);
+    },
+    
     setUser(user) {
       this.user = user;
     },
@@ -31,41 +35,44 @@ export const useAuthStore = defineStore('auth', {
 
     async attempt() {
       try {
-        await this.refresh();
+        // await this.refresh();
         await this.getUser();
       } catch (error) {
-        console.error('Error in attempt:', error);
-        return;
+        console.error("Error in attempt:", error);
+        throw(error);
       }
     },
 
     async login(payload) {
-        try {
-          const response = await useApi().post(APIEndpoints.AUTH_LOGIN, payload);
-      
-          const { data } = response; 
-      
-          if (data && data.status === 0) {
-            const { accessToken, user } = data.data;
-      
-            this.setAccessToken(accessToken);
-      
-            this.setUser(user);
-      
-            // await this.getUser();
-      
-            return data; 
-          } else {
-            throw new Error('Unexpected response format');
-          }
-        } catch (error) {
-          throw error; 
+      try {
+        const response = await useApi().post(APIEndpoints.AUTH_LOGIN, payload);
+
+        const { data } = response;
+
+        if (data && data.status === 1) {
+          const { accessToken, user } = data.data;
+
+          this.setAccessToken(accessToken);
+
+          this.setUser(user);
+          localStorage.setItem("role", { user }.role);
+          // await this.getUser();
+          // this.setAuthReady(true);
+          return data;
+        } else {
+          throw new Error("Unexpected response format");
         }
-      },
+      } catch (error) {
+        throw error;
+      }
+    },
 
     async register(payload) {
       try {
-        const { data } = await useApi().post(APIEndpoints.AUTH_REGISTER, payload);
+        const { data } = await useApi().post(
+          APIEndpoints.AUTH_REGISTER,
+          payload
+        );
         return data;
       } catch (error) {
         throw error.message;
@@ -74,14 +81,18 @@ export const useAuthStore = defineStore('auth', {
 
     async getUser() {
       try {
-        const { data } = await useApiPrivate().post(APIEndpoints.AUTH_USER, {
-          headers: {
-            Authorization: 'Bearer ' + this.accessToken,
-          },
-        });
-        this.setUser(data);
-        localStorage.setItem('role', data.role);
-        return data;
+        const { data } = await useApiPrivate().get(APIEndpoints.AUTH_USER);
+        if (data) {
+          this.setUser(data);
+
+          // await this.getUser();
+          localStorage.setItem("role", { data }.role);
+          // this.setAuthReady(true);
+          return data;
+        } else {
+          throw new Error("Unexpected response format");
+        }
+        // this.setUser(data);
       } catch (error) {
         throw error.message;
       }
@@ -90,12 +101,13 @@ export const useAuthStore = defineStore('auth', {
     async logout() {
       try {
         await useApiPrivate().post(APIEndpoints.AUTH_LOGOUT);
-        this.accessToken = '';
+        this.accessToken = "";
         this.user = {};
-        localStorage.removeItem('token');
-        localStorage.removeItem('role');
+        localStorage.removeItem("token");
+        localStorage.removeItem("role");
+        window.dispatchEvent(new Event('storage'));
       } catch (error) {
-        console.error('Error in logout:', error);
+        console.error("Error in logout:", error);
         throw error.message;
       }
     },
@@ -106,7 +118,7 @@ export const useAuthStore = defineStore('auth', {
         this.setAccessToken(data.access_token);
         return data;
       } catch (error) {
-        console.error('Error in refresh:', error);
+        console.error("Error in refresh:", error);
         throw error.message;
       }
     },

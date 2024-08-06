@@ -1,7 +1,8 @@
 <template>
   <div class="sidebar">
-    <router-link to="/dashboard/home">Home</router-link>
-    <router-link to="/dashboard/profile">Profile</router-link>
+    <router-link to="/dashboard/home">Trang chủ</router-link>
+    <router-link to="/dashboard/manageCv">Quản lý CV</router-link>
+    <router-link to="/dashboard/profile">Cài đặt công ty</router-link>
     <router-link to="/dashboard/settings">Settings</router-link>
   </div>
 </template>

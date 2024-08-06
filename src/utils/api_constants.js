@@ -6,4 +6,10 @@ export const APIEndpoints = {
   AUTH_USER: "/api/auth/user",
   AUTH_LOGOUT: "/api/auth/logout",
   AUTH_REFRESH: "/api/auth/refresh",
+  COMPANY_FETCH: "/api/company/get-company-by-user",
+  COMPANY_UPDATE: "/api/company/update-company",
+  COMPANY_CREATE: "/api/company/create-company",
+  COMPANY_DELETE: "/api/company/delete-company",
+
 };
+

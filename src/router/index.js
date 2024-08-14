@@ -5,6 +5,8 @@ import Profile from "../views/Profile.vue";
 import Settings from "../views/Setting.vue";
 import { useAuthStore } from "@/stores/auth";
 import ManageCV from "@/views/ManageCV.vue";
+import ManagePost from "@/views/ManagePost.vue";
+import JobApplicants from "@/views/JobApplicants.vue";
 let routes = [
   {
     // will match everything
@@ -50,6 +52,11 @@ let routes = [
         meta: { requiresAuth: true },
       },
       {
+        path: "managePost",
+        component: ManagePost,
+        meta: { requiresAuth: true },
+      },
+      {
         path: "settings",
         component: Settings,
         meta: { requiresAuth: true },
@@ -59,8 +66,14 @@ let routes = [
         component: ManageCV,
         meta: { requiresAuth: true },
       },
+      {
+        path: 'job-applicants/:jobId',
+        name: 'JobApplicants',
+        component: JobApplicants
+      }
     ],
   },
+ 
 ];
 const router = createRouter({
   // mode: 'hash',

@@ -38,7 +38,9 @@
             <a-button @click="editCompany(company)" class="edit-button"
               >Chỉnh sửa</a-button
             >
-            <a-button @click="deleteCompany(company.id)" class="delete-button"
+            <a-button
+              @click="confirmDeleteCompany(company.id)"
+              class="delete-button"
               >Xóa</a-button
             >
           </div>
@@ -105,168 +107,174 @@
         </a-form-item>
       </a-form>
     </a-modal>
+    <ConfirmDeleteModal
+      ref="confirmDeleteModal"
+      :modalTitle="modalTitleDelete"
+      :modalContent="modalContentDelete"
+    />
   </div>
 </template>
 
-<script>
+<script setup>
 import { defineComponent, ref, onMounted } from "vue";
 import { useCompanyStore } from "../stores/company";
 import { useAuthStore } from "../stores/auth";
 import { notification } from "ant-design-vue";
+import ConfirmDeleteModal from "../components/ConfirmDeleteModal.vue"; // Import component
 
-export default defineComponent({
-  name: "CompanyList",
-  setup() {
-    const companyStore = useCompanyStore();
-    const authStore = useAuthStore();
-    const isModalVisible = ref(false);
-    const isEditing = ref(false);
-    const companies = ref([]);
-    const formState = ref({
-      id: null,
-      name: "",
-      address: "",
-      email: "",
-      phone: "",
-      code_tax: "",
-      image: null,
-      imagePreview: null,
-    });
-    const modalTitle = ref("Chỉnh sửa Công Ty");
-    const loading = ref(true);
+const companyStore = useCompanyStore();
+const authStore = useAuthStore();
+const isModalVisible = ref(false);
+const isEditing = ref(false);
+const companies = ref([]);
+const formState = ref({
+  id: null,
+  name: "",
+  address: "",
+  email: "",
+  phone: "",
+  code_tax: "",
+  image: null,
+  imagePreview: null,
+});
+const modalTitleDelete = ref("");
+const modalContentDelete = ref("");
+const modalTitle = ref("Chỉnh sửa Công Ty");
+const loading = ref(true);
+const confirmDeleteModal = ref(null); // Define ref for modal component
 
-    const openNotification = (title, content) => {
-      notification.open({
-        message: title,
-        description: content,
-        onClick: () => {
-          console.log("Notification Clicked!");
-        },
-      });
-    };
+const openNotification = (title, content) => {
+  notification.open({
+    message: title,
+    description: content,
+    onClick: () => {
+      console.log("Notification Clicked!");
+    },
+  });
+};
 
-    const fetchCompanies = async () => {
-      try {
-        await companyStore.fetchCompany({ user_id: authStore.userDetail.id });
-        loading.value = false;
-        companies.value = [];
-        // console.log(companyStore.companies);
-        companies.value = companyStore.companies;
-      } catch (error) {
-        loading.value = false;
-        console.error("Error fetching companies:", error);
-        openNotification("Thất bại!", "Lấy danh sách công ty thất bại");
-      }
-    };
+const fetchCompanies = async () => {
+  try {
+    await companyStore.fetchCompany({ user_id: authStore.userDetail.id });
+    loading.value = false;
+    companies.value = companyStore.companies;
+  } catch (error) {
+    loading.value = false;
+    console.error("Error fetching companies:", error);
+    openNotification("Thất bại!", "Lấy danh sách công ty thất bại");
+  }
+};
 
-    const editCompany = (company) => {
-      formState.value = { ...company };
-      isEditing.value = true;
-      isModalVisible.value = true;
-      modalTitle.value = "Chỉnh sửa Công Ty";
-    };
+const editCompany = (company) => {
+  formState.value = { ...company };
+  isEditing.value = true;
+  isModalVisible.value = true;
+  modalTitle.value = "Chỉnh sửa Công Ty";
+};
 
-    const deleteCompany = async (companyId) => {
-      await companyStore.deleteCompany(companyId);
-      await fetchCompanies(); 
-    };
+const deleteCompany = async (companyId) => {
+  try {
+    await companyStore.deleteCompany(companyId);
+    openNotification("Thành công!", "Xóa công ty thành công");
+    await fetchCompanies();
+  } catch (error) {
+    console.error("Error deleting company:", error);
+    openNotification("Thất bại!", "Xóa công ty thất bại");
+  }
+};
 
-    const showAddModal = () => {
-      formState.value = {
-        id: null,
-        name: "",
-        address: "",
-        email: "",
-        phone: "",
-      };
-      isEditing.value = false;
-      modalTitle.value = "Thêm Công Ty";
-      isModalVisible.value = true;
-    };
-    const statusClass = (status) => {
-      return status === "pending"
-        ? "pending"
-        : status === "accepted"
-        ? "accepted"
-        : "rejected";
-    };
-    const statusText = (status) => {
-      switch (status) {
-        case "pending":
-          return "Chưa xác thực";
-        case "accepted":
-          return "Đã xác thực";
-        case "rejected":
-          return "Bị từ chối";
-        default:
-          return "";
-      }
-    };
-    const handleFileChange = (event) => {
-      const file = event.target.files[0];
-      if (file) {
-        formState.value.image = file;
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          formState.value.imagePreview = e.target.result;
-        };
-        reader.readAsDataURL(file);
-      }
-    };
-    const handleOk = async () => {
-      const formData = new FormData();
-      Object.keys(formState.value).forEach((key) => {
-        if (key !== "imagePreview") {
-          formData.append(key, formState.value[key]);
-        }
-      });
-      if (isEditing.value) {
-        try {
-          await companyStore.updateCompany(formState.value);
-          await fetchCompanies(); 
-          openNotification("Thành công!", "Cập nhật công ty thành công");
-        } catch (error) {
-          console.error("Error fetching companies:", error);
-          openNotification("Thất bại!", "Cập nhật công ty thất bại");
-        }
-      } else {
-        try {
-          await companyStore.addCompany(formState.value);
-          await fetchCompanies(); 
-          openNotification("Thành công!", "Thêm công ty thành công");
-        } catch (error) {
-          console.error("Error fetching companies:", error);
-          openNotification("Thất bại!", "Thêm công ty thất bại");
-        }
-      }
-      isModalVisible.value = false;
-    };
+const confirmDeleteCompany = (companyId) => {
+  if (confirmDeleteModal.value) {
+    modalTitleDelete.value = "Xóa công ty";
+    modalContentDelete.value = `Bạn có chắc chắn muốn xóa công ty có ID ${companyId}?`;
+    confirmDeleteModal.value.showModal(() => deleteCompany(companyId));
+  } else {
+    console.error("confirmDeleteModal is not initialized");
+  }
+};
 
-    const handleCancel = () => {
-      isModalVisible.value = false;
-    };
+const showAddModal = () => {
+  formState.value = {
+    id: null,
+    name: "",
+    address: "",
+    email: "",
+    phone: "",
+  };
+  isEditing.value = false;
+  modalTitle.value = "Thêm Công Ty";
+  isModalVisible.value = true;
+};
 
-    // Fetch companies data when the component is mounted
-    onMounted(() => {
-      fetchCompanies();
-    });
+const statusClass = (status) => {
+  return status === "pending"
+    ? "pending"
+    : status === "accepted"
+    ? "accepted"
+    : "rejected";
+};
 
-    return {
-      companies,
-      isModalVisible,
-      formState,
-      showAddModal,
-      editCompany,
-      deleteCompany,
-      handleOk,
-      handleCancel,
-      statusClass,
-      statusText,
-      modalTitle,
-      loading,
-      handleFileChange
+const statusText = (status) => {
+  switch (status) {
+    case "pending":
+      return "Chưa xác thực";
+    case "accepted":
+      return "Đã xác thực";
+    case "rejected":
+      return "Bị từ chối";
+    default:
+      return "";
+  }
+};
+
+const handleFileChange = (event) => {
+  const file = event.target.files[0];
+  if (file) {
+    formState.value.image = file;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      formState.value.imagePreview = e.target.result;
     };
-  },
+    reader.readAsDataURL(file);
+  }
+};
+
+const handleOk = async () => {
+  const formData = new FormData();
+  Object.keys(formState.value).forEach((key) => {
+    if (key !== "imagePreview") {
+      formData.append(key, formState.value[key]);
+    }
+  });
+  if (isEditing.value) {
+    try {
+      await companyStore.updateCompany(formState.value);
+      await fetchCompanies();
+      openNotification("Thành công!", "Cập nhật công ty thành công");
+    } catch (error) {
+      console.error("Error updating company:", error);
+      openNotification("Thất bại!", "Cập nhật công ty thất bại");
+    }
+  } else {
+    try {
+      await companyStore.addCompany(formState.value);
+      await fetchCompanies();
+      openNotification("Thành công!", "Thêm công ty thành công");
+    } catch (error) {
+      console.error("Error adding company:", error);
+      openNotification("Thất bại!", "Thêm công ty thất bại");
+    }
+  }
+  isModalVisible.value = false;
+};
+
+const handleCancel = () => {
+  isModalVisible.value = false;
+};
+
+// Fetch companies data when the component is mounted
+onMounted(() => {
+  fetchCompanies();
 });
 </script>
 

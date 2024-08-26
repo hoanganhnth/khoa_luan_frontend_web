@@ -1,7 +1,7 @@
 <template>
   <v-app>
     <v-main>
-      <router-view v-if="authReady"></router-view>
+      <router-view ></router-view>
     </v-main>
   </v-app>
 </template>
@@ -18,16 +18,21 @@ export default {
     const authStore = useAuthStore();
     const router = useRouter();
     const authReady = ref(false);
-
+    const route = router.options.history.location;
     const token = localStorage.getItem("token");
-
+    // router.push("/sign-in");
     if (token) {
       authStore.setAccessToken(token);
       authStore.attempt().then(() => {
         authReady.value = true;
       }).catch((error) => {
         console.error("Error in App setup hook:", error);
-        router.push("/sign-in");
+        // Nếu đang ở trang signup thì điều hướng về signup, nếu không thì về sign-in
+        if (route === '/sign-up') {
+          router.push("/sign-up");
+        } else {
+          router.push("/sign-in");
+        }
       });
     } else {
       router.push("/sign-in");

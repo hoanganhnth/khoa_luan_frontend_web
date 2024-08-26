@@ -112,6 +112,31 @@ export const useJobStore = defineStore("job", {
         throw error;
       }
     },
+    async updateApplicantStatus(status, jobApplication_id) {
+      try {
+        // Define the payload with status and jobApplication_id
+        const payload = {
+          status: status,
+          jobApplication_id: jobApplication_id,
+        };
+
+        // Call the API to update the job application status
+        const response = await useApiPrivate().post(
+          APIEndpoints.JOB_APPLICATION_UPDATE,
+          payload
+        );
+
+        // Check if the response is successful and has the expected format
+        if (response.data && response.data.status === 1) {
+          return true; // Update successful
+        } else {
+          throw new Error("Unexpected response format or update failed");
+        }
+      } catch (error) {
+        console.error("Failed to update job application:", error);
+        throw error; // Re-throw error to be handled by caller
+      }
+    },
     async fetchJobAplication(job_id) {
       try {
         const response = await useApi().post(
@@ -124,70 +149,71 @@ export const useJobStore = defineStore("job", {
         if (data.status === 1) {
           // return response.data;
           return {
-            "status": 1,
-            "message": "Success",
-            "data": [
-                {
-                    "id": 1,
-                    "job_id": 4,
-                    "user_id": 11,
-                    "status": "accepted",
-                    "applied_at": "2024-07-15T18:04:27.000Z",
-                    "cover_letter": "Xin chao",
-                    "resume_url": null,
-                    "email_candidate": null,
-                    "createdAt": "2024-07-15T18:04:27.000Z",
-                    "updatedAt": "2024-07-17T18:09:43.000Z"
-                },
-                {
-                  "id": 2,
-                  "job_id": 4,
-                  "user_id": 11,
-                  "status": "accepted",
-                  "applied_at": "2024-07-15T18:04:27.000Z",
-                  "cover_letter": "Xin chao",
-                  "resume_url": null,
-                  "email_candidate": null,
-                  "createdAt": "2024-07-15T18:04:27.000Z",
-                  "updatedAt": "2024-07-17T18:09:43.000Z"
+            status: 1,
+            message: "Success",
+            data: [
+              {
+                id: 1,
+                job_id: 13,
+                user_id: 11,
+                status: "pending",
+                applied_at: "2024-07-15T18:04:27.000Z",
+                cover_letter: "Xin chao",
+                resume_url: null,
+                email_candidate: null,
+                createdAt: "2024-07-15T18:04:27.000Z",
+                updatedAt: "2024-07-17T18:09:43.000Z",
               },
               {
-                "id": 3,
-                "job_id": 4,
-                "user_id": 11,
-                "status": "accepted",
-                "applied_at": "2024-07-15T18:04:27.000Z",
-                "cover_letter": "Xin chao",
-                "resume_url": null,
-                "email_candidate": null,
-                "createdAt": "2024-07-15T18:04:27.000Z",
-                "updatedAt": "2024-07-17T18:09:43.000Z"
-            },
-            {
-              "id": 3,
-              "job_id": 4,
-              "user_id": 11,
-              "status": "accepted",
-              "applied_at": "2024-07-15T18:04:27.000Z",
-              "cover_letter": "Xin chao",
-              "resume_url": null,
-              "email_candidate": null,
-              "createdAt": "2024-07-15T18:04:27.000Z",
-              "updatedAt": "2024-07-17T18:09:43.000Z"
-          },  {
-            "id": 3,
-            "job_id": 4,
-            "user_id": 11,
-            "status": "accepted",
-            "applied_at": "2024-07-15T18:04:27.000Z",
-            "cover_letter": "Xin chao",
-            "resume_url": null,
-            "email_candidate": null,
-            "createdAt": "2024-07-15T18:04:27.000Z",
-            "updatedAt": "2024-07-17T18:09:43.000Z"
-        },
-            ]
-        }
+                id: 2,
+                job_id: 4,
+                user_id: 11,
+                status: "pending",
+                applied_at: "2024-07-15T18:04:27.000Z",
+                cover_letter: "Xin chao",
+                resume_url: null,
+                email_candidate: null,
+                createdAt: "2024-07-15T18:04:27.000Z",
+                updatedAt: "2024-07-17T18:09:43.000Z",
+              },
+              {
+                id: 3,
+                job_id: 4,
+                user_id: 11,
+                status: "pending",
+                applied_at: "2024-07-15T18:04:27.000Z",
+                cover_letter: "Xin chao",
+                resume_url: null,
+                email_candidate: null,
+                createdAt: "2024-07-15T18:04:27.000Z",
+                updatedAt: "2024-07-17T18:09:43.000Z",
+              },
+              {
+                id: 4,
+                job_id: 4,
+                user_id: 11,
+                status: "accepted",
+                applied_at: "2024-07-15T18:04:27.000Z",
+                cover_letter: "Xin chao",
+                resume_url: null,
+                email_candidate: null,
+                createdAt: "2024-07-15T18:04:27.000Z",
+                updatedAt: "2024-07-17T18:09:43.000Z",
+              },
+              {
+                id: 5,
+                job_id: 4,
+                user_id: 11,
+                status: "accepted",
+                applied_at: "2024-07-15T18:04:27.000Z",
+                cover_letter: "Xin chao",
+                resume_url: null,
+                email_candidate: null,
+                createdAt: "2024-07-15T18:04:27.000Z",
+                updatedAt: "2024-07-17T18:09:43.000Z",
+              },
+            ],
+          };
         } else {
           throw new Error("Unexpected response format");
         }

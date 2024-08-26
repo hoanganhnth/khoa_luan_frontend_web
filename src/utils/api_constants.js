@@ -16,6 +16,7 @@ export const APIEndpoints = {
   JOB_DELETE: "/api/job/delete-job",
   LOCATION_FETCH: "api/location/get-all-locations",
   INDUSTRY_FETCH: "api/industry/get-all-industries",
-  JOB_APPLICATION_FETCH: "/api/job/get-candidate-by-job"
+  JOB_APPLICATION_FETCH: "/api/job/get-candidate-by-job",
+  JOB_APPLICATION_UPDATE: "/api/job/update-job-application"
 };
 

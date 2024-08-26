@@ -10,34 +10,61 @@
         :description="'Trạng thái: ' + getStatusText(applicant.status)"
       />
       <p>Applied At: {{ applicant.applied_at }}</p>
+
+      <!-- Button to View CV -->
       <a-button
         @click="viewCV(applicant.resume_url)"
         type="primary"
         style="margin-right: 8px"
         >Xem CV</a-button
       >
+
+      <!-- Select to Update Status -->
       <a-select
         v-model:value="applicant.status"
-        @change="updateStatus(applicant.id, $event)"
+        @change="handleStatusChange(applicant.id, $event)"
+        :disabled="isStatusDisabled(applicant.status)"
+        style="margin-bottom: 8px; width: 120px"
       >
-        <a-select-option value="pending">Đã gửi</a-select-option>
-        <a-select-option value="accepted">Đã chấp nhận</a-select-option>
+        <a-select-option value="pending" disabled>Đã gửi</a-select-option>
+        <a-select-option value="accepted">Chấp nhận</a-select-option>
         <a-select-option value="rejected">Từ chối</a-select-option>
       </a-select>
+
+      <!-- Conditional Rendering of Cover Letter Section -->
+      <p v-if="applicant.cover_letter && applicant.cover_letter.trim() !== ''">
+        Thư giới thiệu:
+        <a
+          @click="viewCoverLetter(applicant.cover_letter)"
+          style="color: #1890ff; cursor: pointer"
+          >Xem</a
+        >
+      </p>
     </a-card>
+
+    <!-- Modal for Viewing Cover Letter -->
+    <a-modal
+      v-model:open="isCoverLetterVisible"
+      footer="{null}"
+      @cancel="isCoverLetterVisible = false"
+    >
+      <p>{{ selectedCoverLetter }}</p>
+    </a-modal>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
-import { notification } from "ant-design-vue";
+import { Modal, notification } from "ant-design-vue";
 import { useJobStore } from "../stores/job";
 
 const route = useRoute();
 const jobStore = useJobStore();
 const applicants = ref([]);
-
+const selectedCoverLetter = ref(""); // Track the selected cover letter
+const isCoverLetterVisible = ref(false); // Control the visibility of the modal
+const originalStatus = "pending";
 const fetchApplicants = async () => {
   try {
     const response = await jobStore.fetchJobAplication(route.params.jobId);
@@ -54,28 +81,56 @@ const viewCV = (resumeUrl) => {
     notification.info({ message: "No CV available" });
   }
 };
+
 const getStatusText = (status) => {
   const statusMapping = {
     pending: "Đã gửi",
-    accepted: "Đã chấp nhận",
+    accepted: "Chấp nhận",
     rejected: "Từ chối",
   };
   return statusMapping[status] || "Unknown";
 };
-const updateStatus = async (applicantId, status) => {
-  try {
-    // Ensure status values are mapped correctly
-    const statusMapping = {
-      "Đã gửi": "PENDING",
-      "Đã chấp nhận": "ACCEPT",
-      "Từ chối": "REJECT",
-    };
-    const statusValue = statusMapping[status];
-    await jobStore.updateApplicantStatus(applicantId, statusValue);
-    fetchApplicants(); // Refresh the list
-  } catch (error) {
-    console.error("Error updating applicant status:", error);
+
+const handleStatusChange = (applicantId, newStatus) => {
+  const applicant = applicants.value.find(a => a.id === applicantId);
+  if (applicant) {
+
+    if (newStatus === 'accepted' || newStatus === 'rejected') {
+      Modal.confirm({
+        title: 'Xác nhận thay đổi trạng thái',
+        content: `Bạn có chắc chắn muốn thay đổi trạng thái của ứng viên này thành ${newStatus === 'accepted' ? 'Chấp nhận' : 'Từ chối'} không?`,
+        okText: 'Xác nhận',
+        cancelText: 'Hủy',
+        onOk: async () => {
+          try {
+            await jobStore.updateApplicantStatus(newStatus, applicantId);
+            // Fetch updated applicants data
+            fetchApplicants();
+            notification.success({ message: 'Cập nhật trạng thái thành công!' });
+          } catch (error) {
+            notification.error({ message: 'Cập nhật trạng thái thất bại!' });
+            applicant.status = originalStatus;
+          }
+        },
+        onCancel() {
+        
+          if (applicant) {
+            applicant.status = originalStatus;
+          }
+        },
+      });
+    } else {
+      // Directly update status if it's not 'accepted' or 'rejected'
+      applicant.status = newStatus;
+    }
   }
+};
+const viewCoverLetter = (coverLetter) => {
+  selectedCoverLetter.value = coverLetter;
+  isCoverLetterVisible.value = true; // Show the modal
+};
+const isStatusDisabled = (status) => {
+  return status === 'accepted' || status === 'rejected';
 };
 
 onMounted(() => {
